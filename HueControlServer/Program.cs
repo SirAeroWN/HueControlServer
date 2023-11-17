@@ -13,11 +13,14 @@ namespace HueControlServer
 
             string? ip = builder.Configuration["LocalHueApi:ip"];
             string? key = builder.Configuration["LocalHueApi:key"];
+            string? env = builder.Configuration["Runtime:Environment"];
 
-            if (ip == null || key == null)
+            if (ip == null || key == null || env == null)
             {
                 throw new ArgumentNullException("config values missing");
             }
+
+            bool isProd = env.Equals("Production", StringComparison.OrdinalIgnoreCase);
 
             WebApplication app = builder.Build();
 
@@ -27,7 +30,7 @@ namespace HueControlServer
             // set command paths
             Dictionary<string, string> commands = new Dictionary<string, string>()
             {
-                { "GoodNight", Path.Combine(builder.Environment.ContentRootPath, "../HueGoodNightCommand/bin/Debug/net7.0/HueGoodNightCommand.exe") }
+                { "GoodNight", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueGoodNightCommand" : "../HueGoodNightCommand/bin/Debug/net7.0/HueGoodNightCommand.exe") }
             };
 
             GateKeeper gateKeeper = new GateKeeper(1000);
@@ -50,7 +53,9 @@ namespace HueControlServer
                 }
             });
 
-            app.Urls.Add("https://*:7160");
+            /* app.Urls.Add("https://*:7160"); */
+            /* app.Urls.Add("http://*:7160"); */
+            app.Urls.Add("http://hcs.olympus-homelab.duckdns.org:7160");
             app.Run();
         }
     }

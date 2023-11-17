@@ -32,14 +32,15 @@ namespace HueGoodNightCommand
                 return 1;
             }
 
-            await Console.Out.WriteLineAsync("waiting first 30 seconds..");
-            await Task.Delay(30 * 1000);
+            int interval = 60;
+            await Console.Out.WriteLineAsync($"waiting first {interval} seconds..");
+            await Task.Delay(interval * 1000);
 
             HuePutResponse sceneResp = await localHueApi.RecallSceneAsync(Guid.Parse("1783fb18-e820-408f-a5fa-8e41a9189584"));
             await Console.Out.WriteLineAsync($"scene set {(sceneResp.HasErrors ? "failed" : "succeeded")}");
 
-            await Console.Out.WriteLineAsync("waiting next 30 seconds..");
-            await Task.Delay(30 * 1000);
+            await Console.Out.WriteLineAsync($"waiting next {interval} seconds..");
+            await Task.Delay(interval * 1000);
 
             // update the light
             UpdateGroupedLight req = new UpdateGroupedLight().TurnOff();
