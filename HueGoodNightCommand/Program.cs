@@ -32,11 +32,14 @@ namespace HueGoodNightCommand
                 return 1;
             }
 
+            HuePutResponse sceneResp = await localHueApi.RecallSceneAsync(Guid.Parse("c7b1428b-bf4b-4dc0-b9bf-756a189a69b4"));
+            await Console.Out.WriteLineAsync($"scene set {(sceneResp.HasErrors ? "failed" : "succeeded")}");
+
             int interval = 60;
             await Console.Out.WriteLineAsync($"waiting first {interval} seconds..");
             await Task.Delay(interval * 1000);
 
-            HuePutResponse sceneResp = await localHueApi.RecallSceneAsync(Guid.Parse("1783fb18-e820-408f-a5fa-8e41a9189584"));
+            sceneResp = await localHueApi.RecallSceneAsync(Guid.Parse("1783fb18-e820-408f-a5fa-8e41a9189584"));
             await Console.Out.WriteLineAsync($"scene set {(sceneResp.HasErrors ? "failed" : "succeeded")}");
 
             await Console.Out.WriteLineAsync($"waiting next {interval} seconds..");

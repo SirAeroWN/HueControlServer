@@ -53,8 +53,10 @@ namespace HueControlServer
                 }
             });
 
-            /* app.Urls.Add("https://*:7160"); */
-            /* app.Urls.Add("http://*:7160"); */
+            /* app.Urls.Add("https://*:7160");
+ */
+            /* app.Urls.Add("http://*:7160");
+ */
             app.Urls.Add("http://hcs.olympus-homelab.duckdns.org:7160");
             app.Run();
         }
