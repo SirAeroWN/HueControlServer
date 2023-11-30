@@ -31,6 +31,7 @@ namespace HueControlServer
             Dictionary<string, string> commands = new Dictionary<string, string>()
             {
                 { "GoodNight", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueGoodNightCommand" : "../HueGoodNightCommand/bin/Debug/net7.0/HueGoodNightCommand.exe") }
+                ,{ "ToggleLivingRoom", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueToggleLivingRoom" : "../HueToggleLivingRoom/bin/Debug/net7.0/HueToggleLivingRoom.exe") }
             };
 
             GateKeeper gateKeeper = new GateKeeper(1000);
@@ -46,6 +47,22 @@ namespace HueControlServer
                     process.StartInfo.Arguments = $"--bridge-ip {ip} --key {key}";
                     process.Start();
                     return Results.Ok("Good Night Started");
+                }
+                else
+                {
+                    return Results.BadRequest("Too many attempts");
+                }
+            });
+
+            app.MapGet("/tlr", () =>
+            {
+                if (gateKeeper.TryRun("ToggleLivingRoom"))
+                {
+                    Process process = new Process();
+                    process.StartInfo.FileName = commands["ToggleLivingRoom"];
+                    process.StartInfo.Arguments = $"--bridge-ip {ip} --key {key}";
+                    process.Start();
+                    return Results.Ok("Toggle Living Room Started");
                 }
                 else
                 {

@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HueControlServer", "HueControlServer\HueControlServer.csproj", "{CD7164E8-A7A7-4F5E-9E1C-C2D2DB478754}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HueControlServer", "HueControlServer\HueControlServer.csproj", "{CD7164E8-A7A7-4F5E-9E1C-C2D2DB478754}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HueGoodNightCommand", "HueGoodNightCommand\HueGoodNightCommand.csproj", "{424714D3-D3F3-4540-9827-D4D237EBC193}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HueGoodNightCommand", "HueGoodNightCommand\HueGoodNightCommand.csproj", "{424714D3-D3F3-4540-9827-D4D237EBC193}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HueToggleLivingRoom", "HueToggleLivingRoom\HueToggleLivingRoom.csproj", "{243742C2-D091-41BB-9144-013394CC5592}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{424714D3-D3F3-4540-9827-D4D237EBC193}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{424714D3-D3F3-4540-9827-D4D237EBC193}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{424714D3-D3F3-4540-9827-D4D237EBC193}.Release|Any CPU.Build.0 = Release|Any CPU
+		{243742C2-D091-41BB-9144-013394CC5592}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{243742C2-D091-41BB-9144-013394CC5592}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{243742C2-D091-41BB-9144-013394CC5592}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{243742C2-D091-41BB-9144-013394CC5592}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
