@@ -31,7 +31,7 @@ namespace HueControlServer
             Dictionary<string, string> commands = new Dictionary<string, string>()
             {
                 { "GoodNight", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueGoodNightCommand" : "../HueGoodNightCommand/bin/Debug/net7.0/HueGoodNightCommand.exe") }
-                ,{ "ToggleLivingRoom", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueToggleLivingRoom" : "../HueToggleLivingRoom/bin/Debug/net7.0/HueToggleLivingRoom.exe") }
+                ,{ "SetLivingRoom", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueSetLivingRoom" : "../HueSetLivingRoom/bin/Debug/net7.0/HueSetLivingRoom.exe") }
             };
 
             GateKeeper gateKeeper = new GateKeeper(1000);
@@ -54,15 +54,35 @@ namespace HueControlServer
                 }
             });
 
-            app.MapGet("/tlr", () =>
+            app.MapGet("/lr/t", () =>
             {
-                if (gateKeeper.TryRun("ToggleLivingRoom"))
+                if (gateKeeper.TryRun("SetLivingRoom"))
                 {
-                    Process process = new Process();
-                    process.StartInfo.FileName = commands["ToggleLivingRoom"];
-                    process.StartInfo.Arguments = $"--bridge-ip {ip} --key {key}";
-                    process.Start();
-                    return Results.Ok("Toggle Living Room Started");
+                    return SetLivingRoom(ip, key, commands, "toggle");
+                }
+                else
+                {
+                    return Results.BadRequest("Too many attempts");
+                }
+            });
+
+            app.MapGet("/lr/on", () =>
+            {
+                if (gateKeeper.TryRun("SetLivingRoom"))
+                {
+                    return SetLivingRoom(ip, key, commands, "on");
+                }
+                else
+                {
+                    return Results.BadRequest("Too many attempts");
+                }
+            });
+
+            app.MapGet("/lr/off", () =>
+            {
+                if (gateKeeper.TryRun("SetLivingRoom"))
+                {
+                    return SetLivingRoom(ip, key, commands, "off");
                 }
                 else
                 {
@@ -76,6 +96,15 @@ namespace HueControlServer
  */
             app.Urls.Add("http://hcs.olympus-homelab.duckdns.org:7160");
             app.Run();
+        }
+
+        private static IResult SetLivingRoom(string ip, string key, Dictionary<string, string> commands, string command)
+        {
+            Process process = new Process();
+            process.StartInfo.FileName = commands["SetLivingRoom"];
+            process.StartInfo.Arguments = $"--bridge-ip {ip} --key {key} --command {command}";
+            process.Start();
+            return Results.Ok("Toggle Living Room Started");
         }
     }
 

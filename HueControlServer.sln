@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HueControlServer", "HueCont
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HueGoodNightCommand", "HueGoodNightCommand\HueGoodNightCommand.csproj", "{424714D3-D3F3-4540-9827-D4D237EBC193}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HueToggleLivingRoom", "HueToggleLivingRoom\HueToggleLivingRoom.csproj", "{243742C2-D091-41BB-9144-013394CC5592}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HueSetLivingRoom", "HueSetLivingRoom\HueSetLivingRoom.csproj", "{243742C2-D091-41BB-9144-013394CC5592}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HueLivingRoom", "HueLivingRoom\HueLivingRoom.csproj", "{C3C0186E-C73A-4EEC-BB6C-D0D666BD6FCD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{243742C2-D091-41BB-9144-013394CC5592}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{243742C2-D091-41BB-9144-013394CC5592}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{243742C2-D091-41BB-9144-013394CC5592}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3C0186E-C73A-4EEC-BB6C-D0D666BD6FCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3C0186E-C73A-4EEC-BB6C-D0D666BD6FCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3C0186E-C73A-4EEC-BB6C-D0D666BD6FCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3C0186E-C73A-4EEC-BB6C-D0D666BD6FCD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
