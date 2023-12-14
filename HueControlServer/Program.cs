@@ -113,7 +113,7 @@ namespace HueControlServer
 
             using (IMqttClient mqttClient = mqttFactory.CreateMqttClient())
             {
-                MqttClientOptions mqttClientOptions = new MqttClientOptionsBuilder().WithTcpServer("olympus-homelab.duckdns.org", port: 1883).Build();
+                MqttClientOptions mqttClientOptions = new MqttClientOptionsBuilder().WithTcpServer(isProd ? "mqtt" : "olympus-homelab.duckdns.org", port: 1883).Build();
 
                 // Setup message handling before connecting so that queued messages
                 // are also handled properly. When there is no event handler attached all
