@@ -43,25 +43,5 @@ namespace HueSetLivingRoom
                 await livingRoom.TurnLightsOn();
             }
         }
-
-        private static async Task<GroupedLight?> FindGroupInRoom(LocalHueApi localHueApi, string roomName)
-        {
-            List<GroupedLight> groupedLights = (await localHueApi.GetGroupedLightsAsync()).Data;
-            GroupedLight? livingRoom = null;
-            foreach (GroupedLight groupedLight in groupedLights)
-            {
-                if (groupedLight.Owner != null)
-                {
-                    List<Room> room = (await localHueApi.GetRoomAsync(groupedLight.Owner.Rid)).Data;
-                    if (room.Any() && (room.FirstOrDefault()?.Metadata?.Name.Equals(roomName, StringComparison.OrdinalIgnoreCase) ?? false))
-                    {
-                        livingRoom = groupedLight;
-                        break;
-                    }
-                }
-            }
-
-            return livingRoom;
-        }
     }
 }

@@ -2,12 +2,15 @@ using HueApi.Models;
 using HueApi;
 using HueApi.Models.Requests;
 using System.Diagnostics;
+using MQTTnet;
+using MQTTnet.Client;
+using System.Text.Json;
 
 namespace HueControlServer
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +35,7 @@ namespace HueControlServer
             {
                 { "GoodNight", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueGoodNightCommand" : "../HueGoodNightCommand/bin/Debug/net7.0/HueGoodNightCommand.exe") }
                 ,{ "SetLivingRoom", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueSetLivingRoom" : "../HueSetLivingRoom/bin/Debug/net7.0/HueSetLivingRoom.exe") }
+                ,{ "SetBedroom", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueSetBedroom" : "../HueSetBedroom/bin/Debug/net7.0/HueSetBedroom.exe") }
             };
 
             GateKeeper gateKeeper = new GateKeeper(1000);
@@ -47,6 +51,20 @@ namespace HueControlServer
                     process.StartInfo.Arguments = $"--bridge-ip {ip} --key {key}";
                     process.Start();
                     return Results.Ok("Good Night Started");
+                }
+                else
+                {
+                    return Results.BadRequest("Too many attempts");
+                }
+            });
+
+            app.MapGet("/cgn", () =>
+            {
+                if (gateKeeper.TryRun("CancelGoodNight"))
+                {
+                    Process.GetProcessesByName("HueGoodNightCommand").FirstOrDefault()?.Kill();
+                    SetBedRoom(ip, key, commands, "on");
+                    return Results.Ok("Good Night Stopped, probably");
                 }
                 else
                 {
@@ -90,12 +108,51 @@ namespace HueControlServer
                 }
             });
 
-            /* app.Urls.Add("https://*:7160");
- */
-            /* app.Urls.Add("http://*:7160");
- */
-            app.Urls.Add("http://hcs.olympus-homelab.duckdns.org:7160");
-            app.Run();
+            // Subscribe to MQTT to get device events
+            var mqttFactory = new MqttFactory();
+
+            using (IMqttClient mqttClient = mqttFactory.CreateMqttClient())
+            {
+                MqttClientOptions mqttClientOptions = new MqttClientOptionsBuilder().WithTcpServer("olympus-homelab.duckdns.org", port: 1883).Build();
+
+                // Setup message handling before connecting so that queued messages
+                // are also handled properly. When there is no event handler attached all
+                // received messages get lost.
+                mqttClient.ApplicationMessageReceivedAsync += e =>
+                {
+                    Console.WriteLine("Received application message.");
+                    string payload = System.Text.Encoding.Default.GetString(e.ApplicationMessage.PayloadSegment);
+                    SNZB_01Message? message = JsonSerializer.Deserialize<SNZB_01Message>(payload);
+                    SetBedRoom(ip, key, commands, "toggle");
+
+                    return Task.CompletedTask;
+                };
+
+                await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
+
+                MqttClientSubscribeOptions mqttSubscribeOptions = mqttFactory.CreateSubscribeOptionsBuilder()
+                    .WithTopicFilter(
+                        f =>
+                        {
+                            f.WithTopic("zigbee2mqtt/0x00124b0029114714");
+                        })
+                    .Build();
+
+                await mqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
+
+                Console.WriteLine("MQTT client subscribed to topic.");
+
+                app.Urls.Add("http://hcs.olympus-homelab.duckdns.org:7160");
+                app.Run();
+            }
+        }
+
+        private static void SetBedRoom(string ip, string key, Dictionary<string, string> commands, string command)
+        {
+            Process process = new Process();
+            process.StartInfo.FileName = commands["SetBedroom"];
+            process.StartInfo.Arguments = $"--bridge-ip {ip} --key {key} --command {command}";
+            process.Start();
         }
 
         private static IResult SetLivingRoom(string ip, string key, Dictionary<string, string> commands, string command)
