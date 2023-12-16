@@ -123,9 +123,19 @@ namespace HueControlServer
                     Console.WriteLine("Received application message.");
                     string payload = System.Text.Encoding.Default.GetString(e.ApplicationMessage.PayloadSegment);
                     SNZB_01Message? message = JsonSerializer.Deserialize<SNZB_01Message>(payload);
-                    if ((message?.action ?? "") != "")
+                    switch (message?.action)
                     {
-                        SetBedRoom(ip, key, commands, "toggle");
+                        case "":
+                            break;
+                        case "single":
+                            SetBedRoom(ip, key, commands, "toggle");
+                            break;
+                        case "double":
+                            SetBedRoom(ip, key, commands, "goodnight");
+                            break;
+                        case "long":
+                            SetBedRoom(ip, key, commands, "winkwink");
+                            break;
                     }
 
                     return Task.CompletedTask;

@@ -25,6 +25,9 @@ namespace HueSetBedroom
                 case "goodnight":
                     await GoodNight(bedroom);
                     break;
+                case "winkwink":
+                    await bedroom.SetScene("winkwink");
+                    break;
                 default:
                     break;
             }
@@ -50,7 +53,7 @@ namespace HueSetBedroom
         {
             await bedroom.SetScene("To Bed");
 
-            int interval = 60;
+            int interval = 30;
             await Console.Out.WriteLineAsync($"waiting first {interval} seconds..");
             await Task.Delay(interval * 1000);
 

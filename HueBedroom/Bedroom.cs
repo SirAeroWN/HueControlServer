@@ -21,6 +21,10 @@ namespace HueBedroom
 
         private static Guid toBedSceneGuid = Guid.Parse("c7b1428b-bf4b-4dc0-b9bf-756a189a69b4");
 
+        private static Guid winkWinkSceneGuid = Guid.Parse("36bcc559-8baa-41e1-8b89-46939ea5066c");
+
+        private static Guid nightLightSceneGuid = Guid.Parse("f7445165-e440-4f76-8818-6ff3fa3ee12d");
+
         public Bedroom(LocalHueApi localHueApi)
         {
             this.localHueApi = localHueApi;
@@ -51,6 +55,8 @@ namespace HueBedroom
                 "Read" => readSceneGuid,
                 "Rest" => restSceneGuid,
                 "To Bed" => toBedSceneGuid,
+                "winkwink" => winkWinkSceneGuid,
+                "Night Light" => nightLightSceneGuid,
                 _ => throw new NotImplementedException()
             };
             HuePutResponse sceneResp = await this.localHueApi.RecallSceneAsync(sceneGuid);
