@@ -144,11 +144,14 @@ namespace HueControlServer
                 await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
 
                 MqttClientSubscribeOptions mqttSubscribeOptions = mqttFactory.CreateSubscribeOptionsBuilder()
-                    .WithTopicFilter(
-                        f =>
-                        {
-                            f.WithTopic("zigbee2mqtt/0x00124b0029114714");
-                        })
+                    .WithTopicFilter("zigbee2mqtt/Button")
+                    //.WithTopicFilter("zigbee2mqtt/Hue Remote")
+                    //.WithTopicFilter(
+                    //    f =>
+                    //    {
+                    //        f.WithTopic("zigbee2mqtt/Button");
+                    //        f.WithTopic("zigbee2mqtt/Hue Remote");
+                    //    })
                     .Build();
 
                 await mqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
