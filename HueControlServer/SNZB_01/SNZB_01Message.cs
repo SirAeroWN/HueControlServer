@@ -1,4 +1,4 @@
-﻿namespace HueControlServer
+﻿namespace HueControlServer.SNZB_01
 {
     public class SNZB_01Message
     {

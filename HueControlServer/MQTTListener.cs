@@ -1,11 +1,10 @@
-﻿
-using MQTTnet.Client;
+﻿using MQTTnet.Client;
 using MQTTnet;
 using System.Threading;
 using System;
-using System.Text.Json;
 using System.Threading.Tasks;
-using MQTTnet.Server;
+using System.Collections.Generic;
+using System.Threading.Channels;
 
 namespace HueControlServer
 {
@@ -15,13 +14,13 @@ namespace HueControlServer
 
         private IMqttClient _mqttClient { get; }
 
-        private CommandRunner _commandRunner { get; }
+        private Dictionary<string, ChannelWriter<MqttApplicationMessage>> _channelWriters { get; }
 
-        public MQTTListener(string server, IMqttClient mqttClient, CommandRunner commandRunner)
+        public MQTTListener(string server, IMqttClient mqttClient, Dictionary<string, ChannelWriter<MqttApplicationMessage>> channelWriters)
         {
             this._server = server;
             this._mqttClient = mqttClient;
-            this._commandRunner = commandRunner;
+            this._channelWriters = channelWriters;
         }
 
         public async Task Initialize()
@@ -32,40 +31,28 @@ namespace HueControlServer
             // Setup message handling before connecting so that queued messages
             // are also handled properly. When there is no event handler attached all
             // received messages get lost.
-            this._mqttClient.ApplicationMessageReceivedAsync += e =>
-            {
-                Console.WriteLine("Received application message.");
-                string topic = e.ApplicationMessage.Topic;
-                string payload = System.Text.Encoding.Default.GetString(e.ApplicationMessage.PayloadSegment);
-                SNZB_01Message? message = JsonSerializer.Deserialize<SNZB_01Message>(payload);
-                switch (message?.action)
-                {
-                    case "":
-                        break;
-                    case "single":
-                        this._commandRunner.SetBedRoom("toggle");
-                        break;
-                    case "double":
-                        this._commandRunner.SetBedRoom("goodnight");
-                        break;
-                    case "long":
-                        this._commandRunner.SetBedRoom("winkwink");
-                        break;
-                }
-
-                return Task.CompletedTask;
-            };
+            this._mqttClient.ApplicationMessageReceivedAsync += this.HandleMessage;
 
             await this._mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
 
-            MqttClientSubscribeOptions mqttSubscribeOptions = new MqttFactory().CreateSubscribeOptionsBuilder()
-                .WithTopicFilter("zigbee2mqtt/Button")
-                .WithTopicFilter("zigbee2mqtt/Hue Remote")
-            .Build();
+            // subscribe to all topics that we have channels for
+            MqttClientSubscribeOptionsBuilder subscriptionOptionsBuilder = new MqttFactory().CreateSubscribeOptionsBuilder();
+            foreach (string topic in this._channelWriters.Keys)
+            {
+                subscriptionOptionsBuilder = subscriptionOptionsBuilder.WithTopicFilter(topic);
+            }
 
+            MqttClientSubscribeOptions mqttSubscribeOptions = subscriptionOptionsBuilder.Build();
             await this._mqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
 
-            Console.WriteLine("MQTT client subscribed to topic.");
+            Console.WriteLine($"MQTT client subscribed to {this._channelWriters.Count} topic{(this._channelWriters.Count == 1 ? "" : "s")}.");
+        }
+
+        private async Task HandleMessage(MqttApplicationMessageReceivedEventArgs eventArgs)
+        {
+            Console.WriteLine("Received application message.");
+            string topic = eventArgs.ApplicationMessage.Topic;
+            await this._channelWriters[topic].WriteAsync(eventArgs.ApplicationMessage);
         }
     }
 }

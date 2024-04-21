@@ -33,13 +33,13 @@ namespace HueBedroom
         public async Task TurnLightsOff()
         {
             UpdateGroupedLight req = new UpdateGroupedLight().TurnOff();
-            GroupedLight? livingRoom = await this.FindGroupInRoom(BedroomName);
-            if (livingRoom == null)
+            GroupedLight? bedroom = await this.FindGroupInRoom(BedroomName);
+            if (bedroom == null)
             {
                 return;
             }
 
-            HuePutResponse resp = await this.localHueApi.UpdateGroupedLightAsync(livingRoom.Id, req);
+            HuePutResponse resp = await this.localHueApi.UpdateGroupedLightAsync(bedroom.Id, req);
             await Console.Out.WriteLineAsync($"scene set {(resp.HasErrors ? "failed" : "succeeded")}");
         }
 
