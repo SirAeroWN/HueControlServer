@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 using System.IO;
 using Microsoft.AspNetCore.Builder;
 using System.Linq;
+using HueControlServer.SNZB_01;
+using System.Threading.Channels;
+using HueControlServer.HueControl;
 
 namespace HueControlServer
 {
@@ -120,11 +123,40 @@ namespace HueControlServer
 
             using (IMqttClient mqttClient = new MqttFactory().CreateMqttClient())
             {
-                // Subscribe to MQTT to get device events
-                MQTTListener mQTTListener = new MQTTListener(isProd ? "mqtt" : "olympus-homelab.duckdns.org", mqttClient, commandRunner);
+                // set up the channels for the different topic handlers
+                Channel<MqttApplicationMessage> SNZB_01Channel = Channel.CreateUnbounded<MqttApplicationMessage>();
+                Channel<MqttApplicationMessage> HueRemoteChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
+                // associate channels with topics
+                Dictionary<string, ChannelWriter<MqttApplicationMessage>> commandWriters = new Dictionary<string, ChannelWriter<MqttApplicationMessage>>()
+                {
+                    { "zigbee2mqtt/Button", SNZB_01Channel.Writer },
+                    { "zigbee2mqtt/Hue Remote", HueRemoteChannel.Writer }
+                };
+
+                // creat the channel handlers
+                SNZB_01Handler SNZB_01Handler = new SNZB_01Handler(commandRunner, SNZB_01Channel.Reader);
+                HueRemoteHandler HueRemoteHandler = new HueRemoteHandler(commandRunner, HueRemoteChannel.Reader);
+
+                // make a cancellation token
+                CancellationTokenSource source = new CancellationTokenSource();
+                CancellationToken token = source.Token;
+
+                // start the handler tasks
+                Task SNZB_01Task = SNZB_01Handler.Listen(token);
+                Task HueRemoteTask = HueRemoteHandler.Listen(token);
+
+                // start the mqtt client
+                MQTTListener mQTTListener = new MQTTListener(isProd ? "mqtt" : "olympus-homelab.duckdns.org", mqttClient, commandWriters);
                 await mQTTListener.Initialize();
+
+                // start the app
                 app.Urls.Add("http://hcs.olympus-homelab.duckdns.org:7160");
                 app.Run();
+
+                // stop the handler tasks
+                source.Cancel();
+                await SNZB_01Task;
+                await HueRemoteTask;
             }
         }
     }
