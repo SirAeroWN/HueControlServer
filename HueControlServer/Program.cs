@@ -5,6 +5,14 @@ using System.Diagnostics;
 using MQTTnet;
 using MQTTnet.Client;
 using System.Text.Json;
+using System;
+using System.Threading;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
+using System.IO;
+using Microsoft.AspNetCore.Builder;
+using System.Linq;
 
 namespace HueControlServer
 {
@@ -40,6 +48,8 @@ namespace HueControlServer
 
             GateKeeper gateKeeper = new GateKeeper(1000);
 
+            CommandRunner commandRunner = new CommandRunner(ip, key, commands);
+
             app.MapGet("/", () => "Hello World!");
 
             app.MapGet("/gn", () =>
@@ -63,7 +73,7 @@ namespace HueControlServer
                 if (gateKeeper.TryRun("CancelGoodNight"))
                 {
                     Process.GetProcessesByName("HueGoodNightCommand").FirstOrDefault()?.Kill();
-                    SetBedRoom(ip, key, commands, "on");
+                    commandRunner.SetBedRoom("on");
                     return Results.Ok("Good Night Stopped, probably");
                 }
                 else
@@ -76,7 +86,7 @@ namespace HueControlServer
             {
                 if (gateKeeper.TryRun("SetLivingRoom"))
                 {
-                    return SetLivingRoom(ip, key, commands, "toggle");
+                    return commandRunner.SetLivingRoom("toggle");
                 }
                 else
                 {
@@ -88,7 +98,7 @@ namespace HueControlServer
             {
                 if (gateKeeper.TryRun("SetLivingRoom"))
                 {
-                    return SetLivingRoom(ip, key, commands, "on");
+                    return commandRunner.SetLivingRoom("on");
                 }
                 else
                 {
@@ -100,7 +110,7 @@ namespace HueControlServer
             {
                 if (gateKeeper.TryRun("SetLivingRoom"))
                 {
-                    return SetLivingRoom(ip, key, commands, "off");
+                    return commandRunner.SetLivingRoom("off");
                 }
                 else
                 {
@@ -108,76 +118,14 @@ namespace HueControlServer
                 }
             });
 
-            // Subscribe to MQTT to get device events
-            var mqttFactory = new MqttFactory();
-
-            using (IMqttClient mqttClient = mqttFactory.CreateMqttClient())
+            using (IMqttClient mqttClient = new MqttFactory().CreateMqttClient())
             {
-                MqttClientOptions mqttClientOptions = new MqttClientOptionsBuilder().WithTcpServer(isProd ? "mqtt" : "olympus-homelab.duckdns.org", port: 1883).Build();
-
-                // Setup message handling before connecting so that queued messages
-                // are also handled properly. When there is no event handler attached all
-                // received messages get lost.
-                mqttClient.ApplicationMessageReceivedAsync += e =>
-                {
-                    Console.WriteLine("Received application message.");
-                    string payload = System.Text.Encoding.Default.GetString(e.ApplicationMessage.PayloadSegment);
-                    SNZB_01Message? message = JsonSerializer.Deserialize<SNZB_01Message>(payload);
-                    switch (message?.action)
-                    {
-                        case "":
-                            break;
-                        case "single":
-                            SetBedRoom(ip, key, commands, "toggle");
-                            break;
-                        case "double":
-                            SetBedRoom(ip, key, commands, "goodnight");
-                            break;
-                        case "long":
-                            SetBedRoom(ip, key, commands, "winkwink");
-                            break;
-                    }
-
-                    return Task.CompletedTask;
-                };
-
-                await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
-
-                MqttClientSubscribeOptions mqttSubscribeOptions = mqttFactory.CreateSubscribeOptionsBuilder()
-                    .WithTopicFilter("zigbee2mqtt/Button")
-                    //.WithTopicFilter("zigbee2mqtt/Hue Remote")
-                    //.WithTopicFilter(
-                    //    f =>
-                    //    {
-                    //        f.WithTopic("zigbee2mqtt/Button");
-                    //        f.WithTopic("zigbee2mqtt/Hue Remote");
-                    //    })
-                    .Build();
-
-                await mqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
-
-                Console.WriteLine("MQTT client subscribed to topic.");
-
+                // Subscribe to MQTT to get device events
+                MQTTListener mQTTListener = new MQTTListener(isProd ? "mqtt" : "olympus-homelab.duckdns.org", mqttClient, commandRunner);
+                await mQTTListener.Initialize();
                 app.Urls.Add("http://hcs.olympus-homelab.duckdns.org:7160");
                 app.Run();
             }
-        }
-
-        private static void SetBedRoom(string ip, string key, Dictionary<string, string> commands, string command)
-        {
-            Process process = new Process();
-            process.StartInfo.FileName = commands["SetBedroom"];
-            process.StartInfo.Arguments = $"--bridge-ip {ip} --key {key} --command {command}";
-            process.Start();
-        }
-
-        private static IResult SetLivingRoom(string ip, string key, Dictionary<string, string> commands, string command)
-        {
-            Process process = new Process();
-            process.StartInfo.FileName = commands["SetLivingRoom"];
-            process.StartInfo.Arguments = $"--bridge-ip {ip} --key {key} --command {command}";
-            process.Start();
-            return Results.Ok("Toggle Living Room Started");
         }
     }
 
