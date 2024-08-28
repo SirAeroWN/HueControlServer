@@ -56,7 +56,7 @@ namespace HueOffice
                 _ => throw new NotImplementedException()
             };
             HuePutResponse sceneResp = await this.localHueApi.RecallSceneAsync(sceneGuid);
-            await Console.Out.WriteLineAsync($"scene set {(sceneResp.HasErrors ? "failed" : "succeeded")}");
+            await Console.Out.WriteLineAsync($"setting scene {scene} {(sceneResp.HasErrors ? "failed" : "succeeded")}");
         }
 
         public async Task<bool> IsOn()

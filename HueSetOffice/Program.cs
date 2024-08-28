@@ -23,6 +23,9 @@ namespace HueSetOffice
                 case "toggle":
                     await ToggleLights(office);
                     break;
+                case "winkwink":
+                    await office.SetScene("winkwink");
+                    break;
                 default:
                     break;
             }
