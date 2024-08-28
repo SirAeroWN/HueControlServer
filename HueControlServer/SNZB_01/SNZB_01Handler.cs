@@ -1,4 +1,5 @@
 ﻿using MQTTnet;
+using System;
 using System.Text.Json;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -7,7 +8,7 @@ namespace HueControlServer.SNZB_01
 {
     public class SNZB_01Handler : ChannelHandlerBase
     {
-        public SNZB_01Handler(CommandRunner runner, ChannelReader<MqttApplicationMessage> channelReader) : base(runner, channelReader)
+        public SNZB_01Handler(CommandRunner runner, ChannelReader<MqttApplicationMessage> channelReader, Action<CommandRunner, string> set) : base(runner, channelReader, set)
         {
         }
 

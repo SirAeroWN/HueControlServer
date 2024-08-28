@@ -16,6 +16,7 @@ using System.Linq;
 using HueControlServer.SNZB_01;
 using System.Threading.Channels;
 using HueControlServer.HueControl;
+using System.CommandLine;
 
 namespace HueControlServer
 {
@@ -44,9 +45,10 @@ namespace HueControlServer
             // set command paths
             Dictionary<string, string> commands = new Dictionary<string, string>()
             {
-                { "GoodNight", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueGoodNightCommand" : "../HueGoodNightCommand/bin/Debug/net7.0/HueGoodNightCommand.exe") }
-                ,{ "SetLivingRoom", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueSetLivingRoom" : "../HueSetLivingRoom/bin/Debug/net7.0/HueSetLivingRoom.exe") }
-                ,{ "SetBedroom", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueSetBedroom" : "../HueSetBedroom/bin/Debug/net7.0/HueSetBedroom.exe") }
+                { "GoodNight", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueGoodNightCommand" : "../HueGoodNightCommand/bin/Debug/net8.0/HueGoodNightCommand.exe") }
+                ,{ "SetLivingRoom", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueSetLivingRoom" : "../HueSetLivingRoom/bin/Debug/net8.0/HueSetLivingRoom.exe") }
+                ,{ "SetBedroom", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueSetBedroom" : "../HueSetBedroom/bin/Debug/net8.0/HueSetBedroom.exe") }
+                ,{ "SetOffice", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueSetOffice" : "../HueSetOffice/bin/Debug/net8.0/HueSetOffice.exe") }
             };
 
             GateKeeper gateKeeper = new GateKeeper(1000);
@@ -125,25 +127,29 @@ namespace HueControlServer
             {
                 // set up the channels for the different topic handlers
                 Channel<MqttApplicationMessage> SNZB_01Channel = Channel.CreateUnbounded<MqttApplicationMessage>();
-                Channel<MqttApplicationMessage> HueRemoteChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
+                Channel<MqttApplicationMessage> BedroomChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
+                Channel<MqttApplicationMessage> OfficeChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
                 // associate channels with topics
                 Dictionary<string, ChannelWriter<MqttApplicationMessage>> commandWriters = new Dictionary<string, ChannelWriter<MqttApplicationMessage>>()
                 {
                     { "zigbee2mqtt/Button", SNZB_01Channel.Writer },
-                    { "zigbee2mqtt/Hue Remote", HueRemoteChannel.Writer }
+                    { "zigbee2mqtt/Bedroom", BedroomChannel.Writer },
+                    { "zigbee2mqtt/Office", OfficeChannel.Writer }
                 };
 
-                // creat the channel handlers
-                SNZB_01Handler SNZB_01Handler = new SNZB_01Handler(commandRunner, SNZB_01Channel.Reader);
-                HueRemoteHandler HueRemoteHandler = new HueRemoteHandler(commandRunner, HueRemoteChannel.Reader);
+                // create the channel handlers
+                //SNZB_01Handler SNZB_01Handler = new SNZB_01Handler(commandRunner, SNZB_01Channel.Reader);
+                HueRemoteHandler BedroomHandler = new HueRemoteHandler(commandRunner, BedroomChannel.Reader, (commandRunner, command) => commandRunner.SetBedRoom(command));
+                HueRemoteHandler OfficeHandler = new HueRemoteHandler(commandRunner, OfficeChannel.Reader, (commandRunner, command) => commandRunner.SetOffice(command));
 
                 // make a cancellation token
                 CancellationTokenSource source = new CancellationTokenSource();
                 CancellationToken token = source.Token;
 
                 // start the handler tasks
-                Task SNZB_01Task = SNZB_01Handler.Listen(token);
-                Task HueRemoteTask = HueRemoteHandler.Listen(token);
+                //Task SNZB_01Task = SNZB_01Handler.Listen(token);
+                Task bedroomTask = BedroomHandler.Listen(token);
+                Task officeTask = OfficeHandler.Listen(token);
 
                 // start the mqtt client
                 MQTTListener mQTTListener = new MQTTListener(isProd ? "mqtt" : "olympus-homelab.duckdns.org", mqttClient, commandWriters);
@@ -155,8 +161,8 @@ namespace HueControlServer
 
                 // stop the handler tasks
                 source.Cancel();
-                await SNZB_01Task;
-                await HueRemoteTask;
+                await bedroomTask;
+                await officeTask;
             }
         }
     }

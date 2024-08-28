@@ -14,7 +14,8 @@ namespace HueControlServer.HueControl
     public class HueRemoteHandler : ChannelHandlerBase
     {
         private Dictionary<HueControlActionEnum, float> _holdDuration { get; }
-        public HueRemoteHandler(CommandRunner runner, ChannelReader<MqttApplicationMessage> channelReader) : base(runner, channelReader)
+
+        public HueRemoteHandler(CommandRunner runner, ChannelReader<MqttApplicationMessage> channelReader, Action<CommandRunner, string> set) : base(runner, channelReader, set)
         {
             this._holdDuration = new Dictionary<HueControlActionEnum, float>()
             {
@@ -42,17 +43,17 @@ namespace HueControlServer.HueControl
                         this._holdDuration[HueControlActionEnum.on_hold] = message.action_duration ?? 0;
                         break;
                     case HueControlActionEnum.on_press_release:
-                        this._commandRunner.SetBedRoom("toggle");
+                        this._set(this._commandRunner, "toggle");
                         break;
                     case HueControlActionEnum.on_hold_release:
                         if (this._holdDuration[HueControlActionEnum.on_hold] > 1)
                         {
-                            this._commandRunner.SetBedRoom("on");
+                            this._set(this._commandRunner, "on");
                             this._holdDuration[HueControlActionEnum.on_hold] = 0;
                         }
                         else
                         {
-                            this._commandRunner.SetBedRoom("toggle");
+                            this._set(this._commandRunner, "toggle");
                         }
                         break;
                     #endregion
@@ -64,7 +65,7 @@ namespace HueControlServer.HueControl
                         break;
                     case HueControlActionEnum.up_press_release:
                     case HueControlActionEnum.up_hold_release:
-                        this._commandRunner.SetBedRoom("winkwink");
+                        this._set(this._commandRunner, "winkwink");
                         this._holdDuration[HueControlActionEnum.up_hold] = 0;
                         break;
                     #endregion
@@ -76,7 +77,7 @@ namespace HueControlServer.HueControl
                         break;
                     case HueControlActionEnum.down_press_release:
                     case HueControlActionEnum.down_hold_release:
-                        this._commandRunner.SetBedRoom("goodnight");
+                        this._set(this._commandRunner, "goodnight");
                         this._holdDuration[HueControlActionEnum.down_hold] = 0;
                         break;
                     #endregion

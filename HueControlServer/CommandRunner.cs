@@ -33,5 +33,14 @@ namespace HueControlServer
             process.Start();
             return Results.Ok("Toggle Living Room Started");
         }
+
+        public IResult SetOffice(string command)
+        {
+            Process process = new Process();
+            process.StartInfo.FileName = this._commands["SetOffice"];
+            process.StartInfo.Arguments = $"--bridge-ip {this._ip} --key {this._key} --command {command}";
+            process.Start();
+            return Results.Ok("Toggle Office Started");
+        }
     }
 }
