@@ -13,15 +13,11 @@ namespace HueLivingRoom
     {
         private LocalHueApi localHueApi { get; }
 
-        private static string livingRoomName = "Living room";
+        private static string livingRoomName = "Living Room";
 
-        private static Guid brightSceneGuid = Guid.Parse("78b34277-e66b-4dee-9e4f-9d3331314a13");
+        private static Guid readSceneGuid = Guid.Parse("027ee501-07bd-40a1-b47c-e13814a616f0");
 
-        private static Guid coolBrightSceneGuid = Guid.Parse("09a74264-432b-40ec-880a-927660d013a0");
-
-        private static Guid winkWinkSceneGuid = Guid.Parse("8a82eb62-5a98-48b6-886d-22fa1ebbaa7e");
-
-        private static Guid restSceneGuid = Guid.Parse("de249c6e-306c-4b3d-a0eb-cc9b12c3f6a6");
+        private static Guid winkWinkSceneGuid = Guid.Parse("56b4ef34-0d58-45ca-8d64-c835789022a8");
 
         public LivingRoom(LocalHueApi localHueApi)
         {
@@ -43,7 +39,7 @@ namespace HueLivingRoom
 
         public async Task TurnLightsOn()
         {
-            HuePutResponse sceneResp = await this.localHueApi.RecallSceneAsync(brightSceneGuid);
+            HuePutResponse sceneResp = await this.localHueApi.RecallSceneAsync(readSceneGuid);
             await Console.Out.WriteLineAsync($"scene set {(sceneResp.HasErrors ? "failed" : "succeeded")}");
         }
 
