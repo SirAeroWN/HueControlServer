@@ -153,6 +153,7 @@ namespace HueControlServer
                 //Task SNZB_01Task = SNZB_01Handler.Listen(token);
                 Task bedroomTask = BedroomHandler.Listen(token);
                 Task officeTask = OfficeHandler.Listen(token);
+                Task livingRoomTask = LivingRoomHandler.Listen(token);
 
                 // start the mqtt client
                 MQTTListener mQTTListener = new MQTTListener(isProd ? "mqtt" : "olympus-homelab.duckdns.org", mqttClient, commandWriters);
@@ -166,6 +167,7 @@ namespace HueControlServer
                 source.Cancel();
                 await bedroomTask;
                 await officeTask;
+                await livingRoomTask;
             }
         }
     }
