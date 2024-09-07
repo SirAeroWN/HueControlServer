@@ -129,18 +129,21 @@ namespace HueControlServer
                 Channel<MqttApplicationMessage> SNZB_01Channel = Channel.CreateUnbounded<MqttApplicationMessage>();
                 Channel<MqttApplicationMessage> BedroomChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
                 Channel<MqttApplicationMessage> OfficeChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
+                Channel<MqttApplicationMessage> LivingRoomChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
                 // associate channels with topics
                 Dictionary<string, ChannelWriter<MqttApplicationMessage>> commandWriters = new Dictionary<string, ChannelWriter<MqttApplicationMessage>>()
                 {
                     { "zigbee2mqtt/Button", SNZB_01Channel.Writer },
                     { "zigbee2mqtt/Bedroom", BedroomChannel.Writer },
-                    { "zigbee2mqtt/Office", OfficeChannel.Writer }
+                    { "zigbee2mqtt/Office", OfficeChannel.Writer },
+                    { "zigbee2mqtt/LivingRoom", LivingRoomChannel.Writer }
                 };
 
                 // create the channel handlers
                 //SNZB_01Handler SNZB_01Handler = new SNZB_01Handler(commandRunner, SNZB_01Channel.Reader);
                 HueRemoteHandler BedroomHandler = new HueRemoteHandler(commandRunner, BedroomChannel.Reader, (commandRunner, command) => commandRunner.SetBedRoom(command));
                 HueRemoteHandler OfficeHandler = new HueRemoteHandler(commandRunner, OfficeChannel.Reader, (commandRunner, command) => commandRunner.SetOffice(command));
+                HueRemoteHandler LivingRoomHandler = new HueRemoteHandler(commandRunner, LivingRoomChannel.Reader, (commandRunner, command) => commandRunner.SetLivingRoom(command));
 
                 // make a cancellation token
                 CancellationTokenSource source = new CancellationTokenSource();
