@@ -28,6 +28,9 @@ namespace HueSetBedroom
                 case "winkwink":
                     await bedroom.SetScene("winkwink");
                     break;
+                case "morning":
+                    await bedroom.SetScene("morning");
+                    break;
                 default:
                     break;
             }

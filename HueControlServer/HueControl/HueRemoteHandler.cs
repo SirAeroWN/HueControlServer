@@ -89,6 +89,7 @@ namespace HueControlServer.HueControl
                         break;
                     case HueControlActionEnum.off_press_release:
                     case HueControlActionEnum.off_hold_release:
+                        this._set(this._commandRunner, "morning");
                         this._holdDuration[HueControlActionEnum.off_hold] = 0;
                         break;
                     #endregion
