@@ -123,6 +123,21 @@ namespace HueControlServer
                 }
             });
 
+            app.MapGet("/house/off", () =>
+            {
+                if (gateKeeper.TryRun("HouseOff"))
+                {
+                    commandRunner.SetLivingRoom("off");
+                    commandRunner.SetBedRoom("off");
+                    return commandRunner.SetOffice("off");
+                }
+                else
+                {
+                    return Results.BadRequest("Too many attempts");
+                }
+
+            });
+
             using (IMqttClient mqttClient = new MqttFactory().CreateMqttClient())
             {
                 // set up the channels for the different topic handlers
@@ -185,7 +200,7 @@ namespace HueControlServer
 
         public bool TryRun(string command)
         {
-            if (!_lastCommandRuntime.ContainsKey(command))
+            if (!this._lastCommandRuntime.ContainsKey(command))
             {
                 this._lastCommandRuntime[command] = DateTime.Now.Ticks;
                 return true;
