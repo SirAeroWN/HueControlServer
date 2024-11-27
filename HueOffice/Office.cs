@@ -6,12 +6,16 @@ using System.Threading.Tasks;
 using HueApi;
 using HueApi.Models.Requests;
 using HueApi.Models;
+using MQTTnet.Client;
+using MQTTnet;
 
 namespace HueOffice
 {
     public class Office
     {
         private LocalHueApi localHueApi { get; }
+
+        private IMqttClient mqttClient { get; }
 
         private static string officeName = "Office";
 
@@ -23,9 +27,10 @@ namespace HueOffice
 
         private static Guid restSceneGuid = Guid.Parse("de249c6e-306c-4b3d-a0eb-cc9b12c3f6a6");
 
-        public Office(LocalHueApi localHueApi)
+        public Office(LocalHueApi localHueApi, IMqttClient mqttClient)
         {
             this.localHueApi = localHueApi;
+            this.mqttClient = mqttClient;
         }
 
         public async Task TurnLightsOff()
@@ -38,15 +43,37 @@ namespace HueOffice
             }
 
             HuePutResponse resp = await this.localHueApi.UpdateGroupedLightAsync(bedroom.Id, req);
-            await Console.Out.WriteLineAsync($"scene set {(resp.HasErrors ? "failed" : "succeeded")}");
+            bool success = resp.HasErrors == false;
+            if (success)
+            {
+                MqttClientPublishResult result = await SetPlugState(on: false);
+                success &= result.IsSuccess;
+            }
+
+            await Console.Out.WriteLineAsync($"scene set {(success ? "failed" : "succeeded")}");
         }
 
         public async Task TurnLightsOn()
         {
-            await this.SetScene("Bright");
+            bool success = await this.SetScene("Bright");
+            if (success)
+            {
+                MqttClientPublishResult result = await SetPlugState(on: true);
+                success &= result.IsSuccess;
+            }
         }
 
-        public async Task SetScene(string scene)
+        private async Task<MqttClientPublishResult> SetPlugState(bool on)
+        {
+            var offMessage = new MqttApplicationMessageBuilder()
+                                .WithTopic("zigbee2mqtt/OfficeLampPlug/set")
+                                .WithPayload($"{{\"state\": \"{(on ? "ON" : "OFF")}\"}}")
+                                .Build();
+            var result = await this.mqttClient.PublishAsync(offMessage, CancellationToken.None);
+            return result;
+        }
+
+        public async Task<bool> SetScene(string scene)
         {
             Guid sceneGuid = scene switch
             {
@@ -56,7 +83,10 @@ namespace HueOffice
                 _ => throw new NotImplementedException()
             };
             HuePutResponse sceneResp = await this.localHueApi.RecallSceneAsync(sceneGuid);
-            await Console.Out.WriteLineAsync($"setting scene {scene} {(sceneResp.HasErrors ? "failed" : "succeeded")}");
+
+            bool success = sceneResp.HasErrors == false;
+            await Console.Out.WriteLineAsync($"setting scene {scene} {(success ? "failed" : "succeeded")}");
+            return success;
         }
 
         public async Task<bool> IsOn()

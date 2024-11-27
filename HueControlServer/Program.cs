@@ -151,7 +151,7 @@ namespace HueControlServer
                     { "zigbee2mqtt/Button", SNZB_01Channel.Writer },
                     { "zigbee2mqtt/Bedroom", BedroomChannel.Writer },
                     { "zigbee2mqtt/Office", OfficeChannel.Writer },
-                    { "zigbee2mqtt/LivingRoom", LivingRoomChannel.Writer }
+                    { "zigbee2mqtt/LivingRoom", LivingRoomChannel.Writer },
                 };
 
                 // create the channel handlers
