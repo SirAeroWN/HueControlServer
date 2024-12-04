@@ -51,7 +51,7 @@ namespace HueControlServer
                 ,{ "SetOffice", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueSetOffice" : "../HueSetOffice/bin/Debug/net8.0/HueSetOffice.exe") }
             };
 
-            GateKeeper gateKeeper = new GateKeeper(1000);
+            GateKeeper gateKeeper = new GateKeeper(100);
 
             CommandRunner commandRunner = new CommandRunner(ip, key, commands);
 
@@ -123,24 +123,11 @@ namespace HueControlServer
                 }
             });
 
-            app.MapGet("/office/on", () =>
+            app.MapGet("/office/toggle", () =>
             {
-                if (gateKeeper.TryRun("OfficeOn"))
+                if (gateKeeper.TryRun("OfficeToggle"))
                 {
-                    return commandRunner.SetOffice("on");
-                }
-                else
-                {
-                    return Results.BadRequest("Too many attempts");
-                }
-
-            });
-
-            app.MapGet("/office/off", () =>
-            {
-                if (gateKeeper.TryRun("OfficeOff"))
-                {
-                    return commandRunner.SetOffice("off");
+                    return commandRunner.SetOffice("toggle");
                 }
                 else
                 {
@@ -228,13 +215,13 @@ namespace HueControlServer
         {
             if (!this._lastCommandRuntime.ContainsKey(command))
             {
-                this._lastCommandRuntime[command] = DateTime.Now.Ticks;
+                this._lastCommandRuntime[command] = DateTime.Now.Millisecond;
                 return true;
             }
 
-            if ((DateTime.Now.Ticks - _lastCommandRuntime[command]) > this._ageThreshold)
+            if ((DateTime.Now.Millisecond - _lastCommandRuntime[command]) > this._ageThreshold)
             {
-                this._lastCommandRuntime[command] = DateTime.Now.Ticks;
+                this._lastCommandRuntime[command] = DateTime.Now.Millisecond;
                 return true;
             }
             else
