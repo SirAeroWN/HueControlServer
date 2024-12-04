@@ -123,6 +123,32 @@ namespace HueControlServer
                 }
             });
 
+            app.MapGet("/office/on", () =>
+            {
+                if (gateKeeper.TryRun("OfficeOn"))
+                {
+                    return commandRunner.SetOffice("on");
+                }
+                else
+                {
+                    return Results.BadRequest("Too many attempts");
+                }
+
+            });
+
+            app.MapGet("/office/off", () =>
+            {
+                if (gateKeeper.TryRun("OfficeOff"))
+                {
+                    return commandRunner.SetOffice("off");
+                }
+                else
+                {
+                    return Results.BadRequest("Too many attempts");
+                }
+
+            });
+
             app.MapGet("/house/off", () =>
             {
                 if (gateKeeper.TryRun("HouseOff"))
