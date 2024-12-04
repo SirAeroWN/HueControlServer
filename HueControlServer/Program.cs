@@ -51,103 +51,51 @@ namespace HueControlServer
                 ,{ "SetOffice", Path.Combine(builder.Environment.ContentRootPath, isProd ? "HueSetOffice" : "../HueSetOffice/bin/Debug/net8.0/HueSetOffice.exe") }
             };
 
-            GateKeeper gateKeeper = new GateKeeper(100);
-
             CommandRunner commandRunner = new CommandRunner(ip, key, commands);
 
             app.MapGet("/", () => "Hello World!");
 
             app.MapGet("/gn", () =>
             {
-                if (gateKeeper.TryRun("GoodNight"))
-                {
-                    Process process = new Process();
-                    process.StartInfo.FileName = commands["GoodNight"];
-                    process.StartInfo.Arguments = $"--bridge-ip {ip} --key {key}";
-                    process.Start();
-                    return Results.Ok("Good Night Started");
-                }
-                else
-                {
-                    return Results.BadRequest("Too many attempts");
-                }
+                Process process = new Process();
+                process.StartInfo.FileName = commands["GoodNight"];
+                process.StartInfo.Arguments = $"--bridge-ip {ip} --key {key}";
+                process.Start();
+                return Results.Ok("Good Night Started");
             });
 
             app.MapGet("/cgn", () =>
             {
-                if (gateKeeper.TryRun("CancelGoodNight"))
-                {
-                    Process.GetProcessesByName("HueGoodNightCommand").FirstOrDefault()?.Kill();
-                    commandRunner.SetBedRoom("on");
-                    return Results.Ok("Good Night Stopped, probably");
-                }
-                else
-                {
-                    return Results.BadRequest("Too many attempts");
-                }
+                Process.GetProcessesByName("HueGoodNightCommand").FirstOrDefault()?.Kill();
+                commandRunner.SetBedRoom("on");
+                return Results.Ok("Good Night Stopped, probably");
             });
 
             app.MapGet("/lr/t", () =>
             {
-                if (gateKeeper.TryRun("SetLivingRoom"))
-                {
-                    return commandRunner.SetLivingRoom("toggle");
-                }
-                else
-                {
-                    return Results.BadRequest("Too many attempts");
-                }
+                return commandRunner.SetLivingRoom("toggle");
             });
 
             app.MapGet("/lr/on", () =>
             {
-                if (gateKeeper.TryRun("SetLivingRoom"))
-                {
-                    return commandRunner.SetLivingRoom("on");
-                }
-                else
-                {
-                    return Results.BadRequest("Too many attempts");
-                }
+                return commandRunner.SetLivingRoom("on");
             });
 
             app.MapGet("/lr/off", () =>
             {
-                if (gateKeeper.TryRun("SetLivingRoom"))
-                {
-                    return commandRunner.SetLivingRoom("off");
-                }
-                else
-                {
-                    return Results.BadRequest("Too many attempts");
-                }
+                return commandRunner.SetLivingRoom("off");
             });
 
             app.MapGet("/office/toggle", () =>
             {
-                if (gateKeeper.TryRun("OfficeToggle"))
-                {
-                    return commandRunner.SetOffice("toggle");
-                }
-                else
-                {
-                    return Results.BadRequest("Too many attempts");
-                }
-
+                return commandRunner.SetOffice("toggle");
             });
 
             app.MapGet("/house/off", () =>
             {
-                if (gateKeeper.TryRun("HouseOff"))
-                {
-                    commandRunner.SetLivingRoom("off");
-                    commandRunner.SetBedRoom("off");
-                    return commandRunner.SetOffice("off");
-                }
-                else
-                {
-                    return Results.BadRequest("Too many attempts");
-                }
+                commandRunner.SetLivingRoom("off");
+                commandRunner.SetBedRoom("off");
+                return commandRunner.SetOffice("off");
 
             });
 
@@ -196,37 +144,6 @@ namespace HueControlServer
                 await bedroomTask;
                 await officeTask;
                 await livingRoomTask;
-            }
-        }
-    }
-
-    class GateKeeper
-    {
-        private Dictionary<string, long> _lastCommandRuntime = new();
-
-        private long _ageThreshold { get; }
-
-        public GateKeeper(long ageThreshold)
-        {
-            this._ageThreshold = ageThreshold;
-        }
-
-        public bool TryRun(string command)
-        {
-            if (!this._lastCommandRuntime.ContainsKey(command))
-            {
-                this._lastCommandRuntime[command] = DateTime.Now.Millisecond;
-                return true;
-            }
-
-            if ((DateTime.Now.Millisecond - _lastCommandRuntime[command]) > this._ageThreshold)
-            {
-                this._lastCommandRuntime[command] = DateTime.Now.Millisecond;
-                return true;
-            }
-            else
-            {
-                return false;
             }
         }
     }
