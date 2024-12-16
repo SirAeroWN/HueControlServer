@@ -18,6 +18,7 @@ using System.Threading.Channels;
 using HueControlServer.HueControl;
 using System.CommandLine;
 using HueControlServer.HueSmartButton;
+using System.Text;
 
 namespace HueControlServer
 {
@@ -102,39 +103,19 @@ namespace HueControlServer
 
             using (IMqttClient mqttClient = new MqttFactory().CreateMqttClient())
             {
-                // set up the channels for the different topic handlers
-                Channel<MqttApplicationMessage> SNZB_01Channel = Channel.CreateUnbounded<MqttApplicationMessage>();
-                Channel<MqttApplicationMessage> BedroomChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
-                Channel<MqttApplicationMessage> OfficeChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
-                Channel<MqttApplicationMessage> LivingRoomChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
-                Channel<MqttApplicationMessage> SmartButtonBedroomChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
-                // associate channels with topics
-                Dictionary<string, ChannelWriter<MqttApplicationMessage>> commandWriters = new Dictionary<string, ChannelWriter<MqttApplicationMessage>>()
-                {
-                    { "zigbee2mqtt/Button", SNZB_01Channel.Writer },
-                    { "zigbee2mqtt/Bedroom", BedroomChannel.Writer },
-                    { "zigbee2mqtt/Office", OfficeChannel.Writer },
-                    { "zigbee2mqtt/LivingRoom", LivingRoomChannel.Writer },
-                    { "zigbee2mqtt/BedRoomSmartButton", SmartButtonBedroomChannel.Writer },
-                };
-
-                // create the channel handlers
-                //SNZB_01Handler SNZB_01Handler = new SNZB_01Handler(commandRunner, SNZB_01Channel.Reader);
-                HueRemoteHandler BedroomHandler = new HueRemoteHandler(commandRunner, BedroomChannel.Reader, (commandRunner, command) => commandRunner.SetBedRoom(command));
-                HueRemoteHandler OfficeHandler = new HueRemoteHandler(commandRunner, OfficeChannel.Reader, (commandRunner, command) => commandRunner.SetOffice(command));
-                HueRemoteHandler LivingRoomHandler = new HueRemoteHandler(commandRunner, LivingRoomChannel.Reader, (commandRunner, command) => commandRunner.SetLivingRoom(command));
-                HueSmartButtonHandler SmartButtonBedroomHandler = new HueSmartButtonHandler(commandRunner, SmartButtonBedroomChannel.Reader, (commandRunner, command) => commandRunner.SetBedRoom(command));
-
                 // make a cancellation token
                 CancellationTokenSource source = new CancellationTokenSource();
                 CancellationToken token = source.Token;
 
-                // start the handler tasks
-                //Task SNZB_01Task = SNZB_01Handler.Listen(token);
-                Task bedroomTask = BedroomHandler.Listen(token);
-                Task officeTask = OfficeHandler.Listen(token);
-                Task livingRoomTask = LivingRoomHandler.Listen(token);
-                Task smartButtonBedroomTask = SmartButtonBedroomHandler.Listen(token);
+                List<(string topic, Func<CommandRunner, ChannelReader<MqttApplicationMessage>, Action<CommandRunner, string>, ChannelHandlerBase> create, Action<CommandRunner, string> action)> channelActions = new()
+                {
+                    ( "zigbee2mqtt/Bedroom", ChannelHandlerFactory.Create<HueRemoteHandler>, (commandRunner, command) => commandRunner.SetBedRoom(command) ),
+                    ( "zigbee2mqtt/Office", ChannelHandlerFactory.Create<HueRemoteHandler>, (commandRunner, command) => commandRunner.SetOffice(command) ),
+                    ( "zigbee2mqtt/LivingRoom", ChannelHandlerFactory.Create<HueRemoteHandler>, (commandRunner, command) => commandRunner.SetLivingRoom(command) ),
+                    ( "zigbee2mqtt/BedRoomSmartButton", ChannelHandlerFactory.Create<HueSmartButtonHandler>, (commandRunner, command) => commandRunner.SetBedRoom(command) ),
+                };
+
+                (List<Task> tasks, Dictionary<string, ChannelWriter<MqttApplicationMessage>> commandWriters) = InitializeHandlers(commandRunner, channelActions, token);
 
                 // start the mqtt client
                 MQTTListener mQTTListener = new MQTTListener(isProd ? "mqtt" : "olympus-homelab.duckdns.org", mqttClient, commandWriters);
@@ -146,11 +127,40 @@ namespace HueControlServer
 
                 // stop the handler tasks
                 source.Cancel();
-                await bedroomTask;
-                await officeTask;
-                await livingRoomTask;
-                await smartButtonBedroomTask;
+                await Task.WhenAll(tasks);
             }
+        }
+
+        private static (List<Task> tasks, Dictionary<string, ChannelWriter<MqttApplicationMessage>> commandWriters) InitializeHandlers(CommandRunner commandRunner, Dictionary<string, Action<CommandRunner, string>> channelActions, CancellationToken token)
+        {
+            Dictionary<string, ChannelWriter<MqttApplicationMessage>> commandWriters = new();
+            List<Task> tasks = new();
+            foreach (KeyValuePair<string, Action<CommandRunner, string>> channelAction in channelActions)
+            {
+                Channel<MqttApplicationMessage> channel = Channel.CreateUnbounded<MqttApplicationMessage>();
+                commandWriters.Add(channelAction.Key, channel.Writer);
+                tasks.Add(new HueRemoteHandler(commandRunner, channel.Reader, channelAction.Value).Listen(token));
+            }
+
+            return (tasks, commandWriters);
+        }
+
+        private static (List<Task> tasks, Dictionary<string, ChannelWriter<MqttApplicationMessage>> commandWriters) InitializeHandlers(
+            CommandRunner commandRunner,
+            List<(string topic, Func<CommandRunner, ChannelReader<MqttApplicationMessage>, Action<CommandRunner, string>, ChannelHandlerBase> create, Action<CommandRunner, string> action)> channelActions,
+            CancellationToken token
+        )
+        {
+            Dictionary<string, ChannelWriter<MqttApplicationMessage>> commandWriters = new();
+            List<Task> tasks = new();
+            foreach (var channelAction in channelActions)
+            {
+                Channel<MqttApplicationMessage> channel = Channel.CreateUnbounded<MqttApplicationMessage>();
+                commandWriters.Add(channelAction.topic, channel.Writer);
+                tasks.Add(channelAction.create(commandRunner, channel.Reader, channelAction.action).Listen(token));
+            }
+
+            return (tasks, commandWriters);
         }
     }
 }

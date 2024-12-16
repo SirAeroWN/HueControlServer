@@ -1,5 +1,9 @@
-﻿namespace HueControlServer.HueSmartButton
+﻿using HueControlServer.HueControl;
+using System.Text.Json.Serialization;
+
+namespace HueControlServer.HueSmartButton
 {
+    [JsonConverter(typeof(JsonStringEnumConverter<HueSmartButtonActionEnum>))]
     public enum HueSmartButtonActionEnum
     {
         on,
@@ -8,6 +12,8 @@
         skip_forward,
         press,
         hold,
-        release
+        release,
+        brightness_step_down,
+        brightness_step_up
     }
 }
