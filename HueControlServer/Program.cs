@@ -17,6 +17,7 @@ using HueControlServer.SNZB_01;
 using System.Threading.Channels;
 using HueControlServer.HueControl;
 using System.CommandLine;
+using HueControlServer.HueSmartButton;
 
 namespace HueControlServer
 {
@@ -106,6 +107,7 @@ namespace HueControlServer
                 Channel<MqttApplicationMessage> BedroomChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
                 Channel<MqttApplicationMessage> OfficeChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
                 Channel<MqttApplicationMessage> LivingRoomChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
+                Channel<MqttApplicationMessage> SmartButtonBedroomChannel = Channel.CreateUnbounded<MqttApplicationMessage>();
                 // associate channels with topics
                 Dictionary<string, ChannelWriter<MqttApplicationMessage>> commandWriters = new Dictionary<string, ChannelWriter<MqttApplicationMessage>>()
                 {
@@ -113,6 +115,7 @@ namespace HueControlServer
                     { "zigbee2mqtt/Bedroom", BedroomChannel.Writer },
                     { "zigbee2mqtt/Office", OfficeChannel.Writer },
                     { "zigbee2mqtt/LivingRoom", LivingRoomChannel.Writer },
+                    { "zigbee2mqtt/BedRoomSmartButton", SmartButtonBedroomChannel.Writer },
                 };
 
                 // create the channel handlers
@@ -120,6 +123,7 @@ namespace HueControlServer
                 HueRemoteHandler BedroomHandler = new HueRemoteHandler(commandRunner, BedroomChannel.Reader, (commandRunner, command) => commandRunner.SetBedRoom(command));
                 HueRemoteHandler OfficeHandler = new HueRemoteHandler(commandRunner, OfficeChannel.Reader, (commandRunner, command) => commandRunner.SetOffice(command));
                 HueRemoteHandler LivingRoomHandler = new HueRemoteHandler(commandRunner, LivingRoomChannel.Reader, (commandRunner, command) => commandRunner.SetLivingRoom(command));
+                HueSmartButtonHandler SmartButtonBedroomHandler = new HueSmartButtonHandler(commandRunner, SmartButtonBedroomChannel.Reader, (commandRunner, command) => commandRunner.SetBedRoom(command));
 
                 // make a cancellation token
                 CancellationTokenSource source = new CancellationTokenSource();
@@ -130,6 +134,7 @@ namespace HueControlServer
                 Task bedroomTask = BedroomHandler.Listen(token);
                 Task officeTask = OfficeHandler.Listen(token);
                 Task livingRoomTask = LivingRoomHandler.Listen(token);
+                Task smartButtonBedroomTask = SmartButtonBedroomHandler.Listen(token);
 
                 // start the mqtt client
                 MQTTListener mQTTListener = new MQTTListener(isProd ? "mqtt" : "olympus-homelab.duckdns.org", mqttClient, commandWriters);
@@ -144,6 +149,7 @@ namespace HueControlServer
                 await bedroomTask;
                 await officeTask;
                 await livingRoomTask;
+                await smartButtonBedroomTask;
             }
         }
     }
