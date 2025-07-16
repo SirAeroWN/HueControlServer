@@ -55,7 +55,14 @@ namespace HueOffice
 
         public async Task TurnLightsOn()
         {
-            bool success = await this.SetScene("Bright");
+            var currentTime = DateTime.Now.TimeOfDay;
+            string sceneName = "Bright";
+            if (currentTime.Hours > 7 && currentTime.Hours < 18)
+            {
+                sceneName = "CoolBright";
+            }
+
+            bool success = await this.SetScene(sceneName);
             if (success)
             {
                 MqttClientPublishResult result = await SetPlugState(on: true);
@@ -78,6 +85,7 @@ namespace HueOffice
             Guid sceneGuid = scene switch
             {
                 "Bright" => brightSceneGuid,
+                "CoolBright" => coolBrightSceneGuid,
                 "Rest" => restSceneGuid,
                 "winkwink" => winkWinkSceneGuid,
                 _ => throw new NotImplementedException()
