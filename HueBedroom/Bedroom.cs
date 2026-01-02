@@ -73,15 +73,15 @@ namespace HueBedroom
 
         public async Task PowerFanOff()
         {
-            await SetPlugState(on: false);
+            await SetFanPlugState(on: false);
             await Task.Delay(1000);
-            await SetPlugState(on: true);
+            await SetFanPlugState(on: true);
         }
 
-        private async Task<MqttClientPublishResult> SetPlugState(bool on)
+        public async Task<MqttClientPublishResult> SetFanPlugState(bool on)
         {
             var offMessage = new MqttApplicationMessageBuilder()
-                                .WithTopic("zigbee2mqtt/OfficeLampPlug/set")
+                                .WithTopic("zigbee2mqtt/BedRoomFanPlug/set")
                                 .WithPayload($"{{\"state\": \"{(on ? "ON" : "OFF")}\"}}")
                                 .Build();
             var result = await this.mqttClient.PublishAsync(offMessage, CancellationToken.None);

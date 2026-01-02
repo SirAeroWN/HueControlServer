@@ -73,7 +73,7 @@ namespace HueSetBedroom
 
         private static async Task GoodNight(Bedroom bedroom)
         {
-            Task fanTask = TurnOnFan();
+            Task fanTask = TurnOnFan(bedroom);
 
             await bedroom.SetScene("To Bed");
 
@@ -91,8 +91,10 @@ namespace HueSetBedroom
             await fanTask;
         }
 
-        private static async Task TurnOnFan()
+        private static async Task TurnOnFan(Bedroom bedroom)
         {
+            await bedroom.SetFanPlugState(on: true);
+
             string script = """
             import broadlink
             device = broadlink.hello('192.168.1.211')
