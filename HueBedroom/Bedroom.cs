@@ -71,11 +71,6 @@ namespace HueBedroom
             await Console.Out.WriteLineAsync($"scene set {(sceneResp.HasErrors ? "failed" : "succeeded")}");
         }
 
-        public async Task PowerFanOff()
-        {
-            await SetFanPlugState(on: false);
-        }
-
         public async Task<MqttClientPublishResult> SetFanPlugState(bool on)
         {
             var offMessage = new MqttApplicationMessageBuilder()

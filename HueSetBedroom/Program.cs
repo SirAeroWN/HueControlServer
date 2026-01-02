@@ -31,10 +31,11 @@ namespace HueSetBedroom
                     await bedroom.TurnLightsOn();
                     break;
                 case "off":
-                    await bedroom.PowerFanOff();
+                    await bedroom.SetFanPlugState(on: false);
                     await bedroom.TurnLightsOff();
                     break;
                 case "toggle":
+                    await bedroom.SetFanPlugState(on: true);
                     await ToggleLights(bedroom);
                     break;
                 case "goodnight":
@@ -70,7 +71,7 @@ namespace HueSetBedroom
         private static async Task Morning(Bedroom bedroom)
         {
             await bedroom.SetScene("morning");
-            await bedroom.PowerFanOff();
+            await bedroom.SetFanPlugState(on: false);
         }
 
         private static async Task GoodNight(Bedroom bedroom)
