@@ -61,11 +61,15 @@ namespace HueGoodNightCommand
             p.StartInfo = psi;
             p.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
             p.ErrorDataReceived += new DataReceivedEventHandler(OutputHandler);
+
+            await Console.Out.WriteLineAsync("Starting script");
+
             p.Start();
             p.BeginOutputReadLine();
             p.BeginErrorReadLine();
 
             await p.WaitForExitAsync();
+            await Console.Out.WriteLineAsync($"Script exited with {p.ExitCode}");
             return;
         }
 
