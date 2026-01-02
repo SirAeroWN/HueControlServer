@@ -3,8 +3,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /source
 
 RUN apt-get update
-RUN apt-get install -y python3
-RUN pip3 install broadlink
+RUN apt-get install -y python3 python3-pip
+RUN pip3 install broadlink --break-system-packages
 
 # copy csproj and restore as distinct layers
 COPY . .
