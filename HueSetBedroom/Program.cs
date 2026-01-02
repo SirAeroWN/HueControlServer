@@ -92,7 +92,7 @@ namespace HueSetBedroom
                 CreateNoWindow = true,
                 //RedirectStandardOutput = true,
                 //RedirectStandardError = true,
-                FileName = "python3",
+                FileName = "/usr/bin/python3",
                 Arguments = $"-c \"{script}\""
             };
             p.StartInfo = psi;
