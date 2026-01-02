@@ -74,8 +74,6 @@ namespace HueBedroom
         public async Task PowerFanOff()
         {
             await SetFanPlugState(on: false);
-            await Task.Delay(1000);
-            await SetFanPlugState(on: true);
         }
 
         public async Task<MqttClientPublishResult> SetFanPlugState(bool on)

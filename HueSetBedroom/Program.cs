@@ -27,12 +27,15 @@ namespace HueSetBedroom
             switch (command)
             {
                 case "on":
+                    await bedroom.SetFanPlugState(on: true);
                     await bedroom.TurnLightsOn();
                     break;
                 case "off":
+                    await bedroom.SetFanPlugState(on: true);
                     await bedroom.TurnLightsOff();
                     break;
                 case "toggle":
+                    await bedroom.SetFanPlugState(on: true);
                     await ToggleLights(bedroom);
                     break;
                 case "goodnight":
