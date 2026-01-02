@@ -6,12 +6,16 @@ using System.Threading.Tasks;
 using HueApi;
 using HueApi.Models.Requests;
 using HueApi.Models;
+using MQTTnet.Client;
+using MQTTnet;
 
 namespace HueBedroom
 {
     public class Bedroom
     {
         private LocalHueApi localHueApi { get; }
+
+        private IMqttClient mqttClient { get; }
 
         private static string BedroomName = "Bedroom";
 
@@ -27,9 +31,10 @@ namespace HueBedroom
 
         private static Guid morningSceneGuid = Guid.Parse("5dff25c6-252b-46a0-99fb-2368a15899c7");
 
-        public Bedroom(LocalHueApi localHueApi)
+        public Bedroom(LocalHueApi localHueApi, IMqttClient mqttClient)
         {
             this.localHueApi = localHueApi;
+            this.mqttClient = mqttClient;
         }
 
         public async Task TurnLightsOff()
@@ -64,6 +69,23 @@ namespace HueBedroom
             };
             HuePutResponse sceneResp = await this.localHueApi.RecallSceneAsync(sceneGuid);
             await Console.Out.WriteLineAsync($"scene set {(sceneResp.HasErrors ? "failed" : "succeeded")}");
+        }
+
+        public async Task PowerFanOff()
+        {
+            await SetPlugState(on: false);
+            await Task.Delay(1000);
+            await SetPlugState(on: true);
+        }
+
+        private async Task<MqttClientPublishResult> SetPlugState(bool on)
+        {
+            var offMessage = new MqttApplicationMessageBuilder()
+                                .WithTopic("zigbee2mqtt/OfficeLampPlug/set")
+                                .WithPayload($"{{\"state\": \"{(on ? "ON" : "OFF")}\"}}")
+                                .Build();
+            var result = await this.mqttClient.PublishAsync(offMessage, CancellationToken.None);
+            return result;
         }
 
         public async Task<bool> IsOn()

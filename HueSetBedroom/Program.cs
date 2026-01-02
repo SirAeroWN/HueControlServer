@@ -1,16 +1,28 @@
 ﻿using HueApi;
 using HueBedroom;
+using MQTTnet.Client;
+using MQTTnet;
 using System.Diagnostics;
 
 namespace HueSetBedroom
 {
     internal class Program
     {
+#if DEBUG
+        private static string _server = "olympus-homelab.duckdns.org";
+#else
+        private static string _server = "mqtt";
+#endif
+
         static async Task<int> Main(string bridgeIp, string key, string command)
         {
             // create the api object
             var localHueApi = new LocalHueApi(bridgeIp, key);
-            Bedroom bedroom = new Bedroom(localHueApi);
+            // create the mqtt client
+            using IMqttClient mqttClient = new MqttFactory().CreateMqttClient();
+            MqttClientOptions mqttClientOptions = new MqttClientOptionsBuilder().WithTcpServer(_server, port: 1883).Build();
+            await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
+            Bedroom bedroom = new Bedroom(localHueApi, mqttClient);
 
             switch (command)
             {
@@ -30,7 +42,7 @@ namespace HueSetBedroom
                     await bedroom.SetScene("winkwink");
                     break;
                 case "morning":
-                    await bedroom.SetScene("morning");
+                    await Morning(bedroom);
                     break;
                 default:
                     break;
@@ -51,6 +63,12 @@ namespace HueSetBedroom
             {
                 await bedroom.TurnLightsOn();
             }
+        }
+
+        private static async Task Morning(Bedroom bedroom)
+        {
+            await bedroom.SetScene("morning");
+            await bedroom.PowerFanOff();
         }
 
         private static async Task GoodNight(Bedroom bedroom)
