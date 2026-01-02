@@ -88,22 +88,22 @@ namespace HueSetBedroom
             Process p = new Process();
             ProcessStartInfo psi = new ProcessStartInfo()
             {
-                UseShellExecute = false,
+                UseShellExecute = true,
                 CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                //RedirectStandardOutput = true,
+                //RedirectStandardError = true,
                 FileName = "python3",
                 Arguments = $"-c script"
             };
             p.StartInfo = psi;
-            p.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
-            p.ErrorDataReceived += new DataReceivedEventHandler(OutputHandler);
+            //p.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
+            //p.ErrorDataReceived += new DataReceivedEventHandler(OutputHandler);
 
             await Console.Out.WriteLineAsync("Starting script");
 
             p.Start();
-            p.BeginOutputReadLine();
-            p.BeginErrorReadLine();
+            //p.BeginOutputReadLine();
+            //p.BeginErrorReadLine();
 
             await p.WaitForExitAsync();
             await Console.Out.WriteLineAsync($"Script exited with {p.ExitCode}");
