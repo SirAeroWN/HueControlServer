@@ -77,7 +77,7 @@ namespace HueControlServer.HueControl
                         break;
                     case HueControlActionEnum.down_press_release:
                     case HueControlActionEnum.down_hold_release:
-                        this._set(this._commandRunner, "goodnight");
+                        this._set(this._commandRunner, "off");
                         this._holdDuration[HueControlActionEnum.down_hold] = 0;
                         break;
                     #endregion

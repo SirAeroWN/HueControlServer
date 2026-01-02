@@ -31,11 +31,10 @@ namespace HueSetBedroom
                     await bedroom.TurnLightsOn();
                     break;
                 case "off":
-                    await bedroom.SetFanPlugState(on: true);
+                    await bedroom.PowerFanOff();
                     await bedroom.TurnLightsOff();
                     break;
                 case "toggle":
-                    await bedroom.SetFanPlugState(on: true);
                     await ToggleLights(bedroom);
                     break;
                 case "goodnight":
