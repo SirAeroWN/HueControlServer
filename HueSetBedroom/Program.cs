@@ -93,7 +93,7 @@ namespace HueSetBedroom
                 //RedirectStandardOutput = true,
                 //RedirectStandardError = true,
                 FileName = "python3",
-                Arguments = $"-c script"
+                Arguments = $"-c \"{script}\""
             };
             p.StartInfo = psi;
             //p.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
