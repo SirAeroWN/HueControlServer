@@ -3,6 +3,7 @@ using HueApi.Models.Requests;
 using HueApi.Models;
 using HueBedroom;
 using System.Diagnostics;
+using System;
 
 namespace HueGoodNightCommand
 {
@@ -47,22 +48,31 @@ namespace HueGoodNightCommand
             device.send_data(speedPacket)
             """;
             script = script.Split('\n').Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)).Aggregate((x, y) => x + "; " + y);
+            Process p = new Process();
             ProcessStartInfo psi = new ProcessStartInfo()
             {
-                UseShellExecute = true,
+                UseShellExecute = false,
                 CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 FileName = "python3",
                 Arguments = $"-c script"
             };
-
-            Process? p = Process.Start(psi);
-            if (p is null)
-            {
-                return;
-            }
+            p.StartInfo = psi;
+            p.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
+            p.ErrorDataReceived += new DataReceivedEventHandler(OutputHandler);
+            p.Start();
+            p.BeginOutputReadLine();
+            p.BeginErrorReadLine();
 
             await p.WaitForExitAsync();
             return;
+        }
+
+        static void OutputHandler(object sendingProcess, DataReceivedEventArgs outLine)
+        {
+            //* Do your stuff with the output (write to console/log/StringBuilder)
+            Console.WriteLine(outLine.Data);
         }
     }
 }
